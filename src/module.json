@@ -1,0 +1,11 @@
+{
+  "name": "auto-journal",
+  "title": "Automatic Journal Tool For Foundry",
+  "description": "Automatically links journal entries",
+  "version": "0.0.1",
+  "author": "taragnor",
+  "esmodules": ["./scripts/autojournal.js"],
+  "styles": ["./styles/style.css"],
+  "minimumCoreVersion": "0.8.2",
+  "compatibleCoreVersion": "0.8.8"
+}
