@@ -1,4 +1,5 @@
 {
+  "id": "auto-journal",
   "name": "auto-journal",
   "title": "Automatic Journal Tool For Foundry",
   "description": "Automatically links journal entries",

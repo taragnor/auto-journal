@@ -1,27 +1,35 @@
+interface JournalIndex {
+	full: string;
+	id: string;
+	label: string;
+	index: number;
+}
+
 export class Parser {
 
 	static JournalRegex = new RegExp(/@JournalEntry\[([a-zA-Z0-9]+)\]{([^}]*)}/gm);
 
-	static getEmbeddedOutgoingLinks(journalText) {
+	static getEmbeddedOutgoingLinks(journalText: string) : JournalIndex[] {
 		// const journalregex= /@JournalEntry\[([a-zA-Z0-9]+)\]{([^}]*)}/gm;
 		// const re = new RegExp(journalregex);
 		const re = Parser.JournalRegex;
 		const output = journalText.matchAll(re);
-		const array = [];
+		const array : JournalIndex[] = [];
 		for (const item of output) {
 			// console.log(item);
-			array.push({
-				full: item[0],
-				id: item[1],
-				label: item[2],
-				index: item.index
-			});
+			if (item.index != null)
+				array.push({
+					full: item[0],
+					id: item[1],
+					label: item[2],
+					index: item.index
+				});
 		}
 		// console.log(array);
 		return array;
 	}
 
-	static getNonEmbeddedOutgoingLinks(journalText, trie = new Trie()) {
+	static getNonEmbeddedOutgoingLinks(journalText: string, trie = new Trie()) : JournalIndex[] {
 		let links = [];
 		const stripped = Parser.stripHTML(journalText);
 		const embeddedGone = Parser.eliminateEmbedded(stripped);
@@ -49,7 +57,7 @@ export class Parser {
 		return links;
 	}
 
-	static *tokenize(text) {
+	static *tokenize(text: string) {
 		const re = new RegExp( /([^ '"`,.;:!?\[\]@\n]+)([ '"`,.;:!?\[\]@\n]*)/gm);
 		for (const match of text.matchAll(re)) {
 			yield match[1];
@@ -57,17 +65,17 @@ export class Parser {
 		}
 	}
 
-	static getOutgoingLinks(journalText, trie) {
+	static getOutgoingLinks(journalText:string , trie:Trie) {
 		return Parser.getEmbeddedOutgoingLinks(journalText)
 			.concat(Parser.getNonEmbeddedOutgoingLinks(journalText, trie));
 	}
 
-	static eliminateEmbedded(journalText) {
+	static eliminateEmbedded(journalText: string) {
 		const re = Parser.JournalRegex;
 		return journalText.replaceAll(re, "");
 	}
 
-	static stripHTML( text) {
+	static stripHTML( text : string) {
 		let ret = "";
 		let intag = 0;
 		for (const c of text) {
@@ -83,6 +91,10 @@ export class Parser {
 }
 
 export class Trie {
+	endpoint: boolean;
+	branches: number;
+	data: Map<string, Trie>;
+
 	constructor (array : string[] = []) {
 		this.endpoint = false;
 		this.branches = 0;
@@ -91,38 +103,40 @@ export class Trie {
 		}
 	}
 
-	insert(word) {
+	insert(word :string) {
 		if (!word.length) {
 			this.endpoint = true;
 			return;
 		}
 		const head = word[0];
 		const rest = word.substring(1);
-		if (!this[head]) {
-			this[head] = new Trie();
+		const subtrie = this.data.get(head);
+		if (subtrie == undefined) {
+			this.data.set(head, new Trie());
 			this.branches ++;
+		} else {
+			subtrie.insert(rest);
 		}
-		this[head].insert(rest);
 	}
 
-	includes(word) {
+	includes(word: string) : boolean | null {
 		if (!word.length)
 			return this.endpoint;
 		const head = word[0];
 		const rest = word.substring(1);
-		const next = this[head];
+		const next = this.data.get(head);
 		if (next) {
 			return next.includes(rest);
 		}
 		else return null;
 	}
 
-	includesPartial(word) {
+	includesPartial(word: string) : Trie | null{
 		if (!word.length)
 			return this;
 		const head = word[0];
 		const rest = word.substring(1);
-		const next = this[head];
+		const next = this.data.get(head);
 		if (next) {
 			return next.includesPartial(rest);
 		}
